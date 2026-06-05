@@ -12,7 +12,7 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @Service
-public class UserServiceImpl implements TaskService{
+public class TaskServiceImpl implements TaskService{
 
     private final List<Task> taskList;
     @NotNull private Long ids = 0L;
@@ -45,7 +45,7 @@ public class UserServiceImpl implements TaskService{
     @Override
     public void deleteTask(Long id) {
         getTask(id);
-        taskList.remove(id);
+        taskList.removeIf(task -> task.getId().equals(id));
     }
 
     @Override
