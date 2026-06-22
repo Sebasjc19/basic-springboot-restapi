@@ -3,7 +3,7 @@ package edu.learn.basicspringbootapi.service;
 import edu.learn.basicspringbootapi.dto.TaskRequestDto;
 import edu.learn.basicspringbootapi.dto.TaskResponseDto;
 import edu.learn.basicspringbootapi.model.Task;
-import jakarta.validation.constraints.NotNull;
+import edu.learn.basicspringbootapi.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -12,55 +12,48 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @Service
-public class TaskServiceImpl implements TaskService{
+public class TaskServiceImpl implements TaskService {
 
-    private final List<Task> taskList;
-    @NotNull private Long ids = 0L;
+    private final TaskRepository taskRepository;
 
     @Override
     public TaskResponseDto createTask(TaskRequestDto taskRequestDto) {
-        Task task = new Task(
-                ids++,
-                taskRequestDto.title(),
-                taskRequestDto.description(),
-                taskRequestDto.completed(),
-                LocalDate.now()
-                );
-        taskList.add(task);
+        Task task = new Task();
+        task.setTitle(taskRequestDto.title());
+        task.setDescription(taskRequestDto.description());
+        task.setCompleted(taskRequestDto.completed());
+        task.setCreatedAt(LocalDate.now());
+        task = taskRepository.save(task);
         return toResponse(task);
     }
 
     @Override
     public TaskResponseDto updateTask(Long id, TaskRequestDto taskRequestDto) {
-        Task task = taskList.stream().filter(x -> x.getId().equals(id))
-                .findFirst().orElseThrow();
-
+        Task task = taskRepository.findById(id).orElseThrow();
         task.setTitle(taskRequestDto.title());
         task.setDescription(taskRequestDto.description());
         task.setCompleted(taskRequestDto.completed());
-
+        task = taskRepository.save(task);
         return toResponse(task);
     }
 
     @Override
     public void deleteTask(Long id) {
-        getTask(id);
-        taskList.removeIf(task -> task.getId().equals(id));
+        Task task = taskRepository.findById(id).orElseThrow();
+        taskRepository.delete(task);
     }
 
     @Override
     public TaskResponseDto getTask(Long id) {
-        Task task = taskList.stream().filter(x -> x.getId().equals(id))
-                .findAny().orElseThrow();
-        return toResponse(task);
+        return toResponse(taskRepository.findById(id).orElseThrow());
     }
 
     @Override
     public List<TaskResponseDto> getTasks() {
-        return taskList.stream().map(this::toResponse).toList();
+        return taskRepository.findAll().stream().map(this::toResponse).toList();
     }
 
-    private TaskResponseDto toResponse(Task task){
+    private TaskResponseDto toResponse(Task task) {
         return new TaskResponseDto(
                 task.getId(),
                 task.getTitle(),
